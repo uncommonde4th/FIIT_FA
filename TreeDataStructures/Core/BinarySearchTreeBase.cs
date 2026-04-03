@@ -21,8 +21,36 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
     
     public virtual void Add(TKey key, TValue value)
     {
-        throw new NotImplementedException(
-            "Implement standard BST add logic using <CreateNode(key, value)> and OnNodeAdded(newNode)");
+        TNode newNode = CreateNode(key, value);
+
+        if (Root == null)
+        {
+            Root = newNode;
+            Count++;
+            OnNodeAdded(newNode);
+            return;
+        }
+
+        TNode? current = Root;
+        TNode? parent = null;
+
+        while (current != null)
+        {
+            parent = current;
+            int cmp = Comparer.Compare(key, current.Key);
+
+            if (cmp < 0) { current = current.Left; }
+            else if (cmp > 0) { current = current.Right; }
+            else { current.Key = key; }
+        }
+
+        newNode.Parent = parent;
+
+        if (Comparer.Compare(key, parent!.Key) < 0) { parent.Left = newNode; }
+        else { parent.Right = newNode; }
+
+        Count++;
+        OnNodeAdded(newNode);
     }
 
     
@@ -39,7 +67,37 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
     
     protected virtual void RemoveNode(TNode node)
     {
-        throw new NotImplementedException("Implement standard BST delete logic using Transplant helper");
+        if (node.Left == null)
+        {
+            Transplant(node, node.Right);
+            OnNodeRemoved(node.Parent, node.Right);
+        }
+        else if (node.Right == null)
+        {
+            Transplant(node, node.Left);
+            OnNodeRemoved(node.Parent, node.Left);
+        }
+        else
+        {
+            TNode successor = node.Right;
+            while (successor.Left != null)
+            {
+                successor = successor.Left;
+            }
+            if (successor.Parent != node)
+            {
+                Transplant(successor, successor.Right);
+                successor.Right = node.Right;
+                successor.Right.Parent = successor;
+            }
+
+            Transplant(node, successor);
+            successor.Left = node.Left;
+            successor.Left.Parent = successor;
+
+            OnNodeRemoved(successor.Parent, successor);
+        }
+
     }
 
     public virtual bool ContainsKey(TKey key) => FindNode(key) != null;
@@ -150,7 +208,12 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
     private IEnumerable<TreeEntry<TKey, TValue>>  InOrderTraversal(TNode? node)
     {
         if (node == null) {  yield break; }
-        throw new NotImplementedException();
+        
+        foreach (var left in InOrderTraversal(node.Left)) { yield return left; }
+
+        yield return new TreeEntry<TKey, TValue>(node.Key, node.Value, 0);
+
+        foreach (var right in InOrderTraversal(node.Right)) { yield return right; }
     }
     
     public IEnumerable<TreeEntry<TKey, TValue>>  PreOrder() => throw new NotImplementedException();
@@ -203,7 +266,10 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
     
     public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
     {
-        throw new NotImplementedException();
+        foreach (var entry in InOrder())
+        {
+            yield return new KeyValuePair<TKey, TValue>(entry.Key, entry.Value);
+        }
     }
     
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
