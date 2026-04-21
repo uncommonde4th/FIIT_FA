@@ -41,7 +41,11 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
 
             if (cmp < 0) { current = current.Left; }
             else if (cmp > 0) { current = current.Right; }
-            else { current.Value = value; }
+            else 
+            { 
+                current.Value = value;
+                return;
+            }
         }
 
         newNode.Parent = parent;
