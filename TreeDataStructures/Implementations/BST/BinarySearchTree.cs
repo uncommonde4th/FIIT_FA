@@ -20,3 +20,5 @@ public class BinarySearchTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue,
     }
     
 }
+
+// dotnet test TreeDataStructures.Tests/ --filter TestCategory=BST
