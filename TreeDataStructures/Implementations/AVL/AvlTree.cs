@@ -55,3 +55,5 @@ public class AvlTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, AvlNode<
         }
     }  
 }
+
+// dotnet test TreeDataStructures.Tests/ --filter TestCategory=AVL
