@@ -18,65 +18,78 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
     {
         while (newNode.Parent != null && IsRed(newNode.Parent))
         {
-            var dad = newNode.Parent;
-            var grand = dad.Parent;
+            var parent = newNode.Parent;
+            var grand = parent.Parent;
 
+            // Дяди нет (нет деда => нет дяди)
             if (grand == null) { break; }
 
-            if (dad == grand.Left)
+            if (parent == grand.Left)
             {
                 var uncle = grand.Right;
 
+                // Красный дядя
                 if (IsRed(uncle))
                 {
-                    dad.Color = RbColor.Black;
+                    // Опускаем черноту
+                    parent.Color = RbColor.Black;
                     uncle!.Color = RbColor.Black;
                     grand.Color = RbColor.Red;
-
+                    
+                    // Переходим к балансировке выше
                     newNode = grand;
                 }
+
+                // Черный дядя (или null)
                 else
-                {
-                    if (newNode == dad.Right)
+                {   
+                    // Делаем большой правый или малый правый поворот (проверка на зиг-заг)
+                    if (newNode == parent.Right)
                     {
-                        newNode = dad;
+                        newNode = parent;
                         RotateLeft(newNode);
-                        dad = newNode.Parent;
+                        parent = newNode.Parent;
                     }
 
-                    dad!.Color = RbColor.Black;
+                    parent!.Color = RbColor.Black;
                     grand.Color = RbColor.Red;
                     RotateRight(grand);
                 }
             }
+
+            // Случай, если родитель - правый сын деда
             else
             {
                 var uncle = grand.Left;
 
+                // Красный дядя (аналогично)
                 if (IsRed(uncle))
                 {
-                    dad.Color = RbColor.Black;
+                    parent.Color = RbColor.Black;
                     uncle!.Color = RbColor.Black;
                     grand.Color = RbColor.Red;
 
                     newNode = grand;
                 }
+
+                // Черный дядя
                 else
-                {
-                    if (newNode == dad.Left)
+                {   
+                    // Делаем большой левый или малый левый поворот (проверка на зиг-заг)
+                    if (newNode == parent.Left)
                     {
-                        newNode = dad;
+                        newNode = parent;
                         RotateRight(newNode);
-                        dad = newNode.Parent;
+                        parent = newNode.Parent;
                     }
 
-                    dad!.Color = RbColor.Black;
+                    parent!.Color = RbColor.Black;
                     grand.Color = RbColor.Red;
                     RotateLeft(grand);
                 }
             }
         }
-
+        // Принудительно красим корень в черный, чтобы св-во 2) всегда выполнялось
         if (Root != null) { Root.Color = RbColor.Black; }
     }
 
@@ -88,6 +101,7 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
         RbNode<TKey, TValue>? y = node;
         RbColor yOriginalColor = y.Color;
 
+        // Выполняем обычное BST удаление с запоминанием цвета удаляемого узла, его сына(successor) и родителя
         if (node.Left == null)
         {
             x = node.Right;
@@ -103,9 +117,10 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
         else
         {
             y = Minimum(node.Right);
+            // Запоминаем именно оригинальный цвет
             yOriginalColor = y.Color;
             x = y.Right;
-
+            
             if (y.Parent == node) { xParent = y; }
             else
             {
@@ -121,6 +136,7 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
             y.Color = node.Color;
         }
 
+        // Переходим к hook, чтобы восстановить черную высоту, если был удален черный узел
         if (yOriginalColor == RbColor.Black) { OnNodeRemoved(xParent, x); }
     }
 
@@ -130,13 +146,15 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
         var xParent = parent;
 
         while (x != Root && !IsRed(x))
-        {
+        {   
+            // Просто безопасность 
             if (xParent == null) { break; }
 
             if (x == xParent.Left)
             {
                 var brother = xParent.Right;
 
+                // Брат красный (II) - делаем из этого случай (I)
                 if (IsRed(brother))
                 {
                     brother!.Color = RbColor.Black;
@@ -145,16 +163,21 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
                     brother = xParent.Right;
                 }
 
+                // Черный брат, черный nephew, черный far nephew
                 if (!IsRed(brother?.Left) && !IsRed(brother?.Right))
                 {
                     if (brother != null) { brother.Color = RbColor.Red; }
+
+                    // Идем вверх по дереву для балансировки
                     x = xParent;
                     xParent = x.Parent;
                 }
                 else
-                {
+                {   
+                    // Черный брат, красный nephew, черный far nephew
                     if (!IsRed(brother?.Right))
-                    {
+                    {   
+                        // Обрабатываем случай зиг-зага - делаем far nephew красным, чтоб перейти к следующему пункту
                         if (brother != null)
                         {
                             if (brother?.Left != null) { brother.Left.Color = RbColor.Black; }
@@ -164,6 +187,7 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
                         brother = xParent.Right;
                     }
 
+                    // Черный брат, красный far nephew
                     if (brother != null)
                     {
                         brother.Color = xParent.Color;
@@ -175,10 +199,12 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
                     x = Root;
                 }
             }
+
+            // Все то же самое, но зеркально
             else
             {
                 var brother = xParent.Left;
-
+                
                 if (IsRed(brother))
                 {
                     brother!.Color = RbColor.Black;
@@ -222,3 +248,5 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
         if (x != null) x.Color = RbColor.Black;
     }
 }
+
+// dotnet test TreeDataStructures.Tests/ --filter TestCategory=RB
