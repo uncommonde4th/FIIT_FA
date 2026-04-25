@@ -21,7 +21,7 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
             var parent = newNode.Parent;
             var grand = parent.Parent;
 
-            // Дяди нет (нет деда => нет дяди)
+            // Добавили к корню (точно черный) красный узел => все окей
             if (grand == null) { break; }
 
             if (parent == grand.Left)
